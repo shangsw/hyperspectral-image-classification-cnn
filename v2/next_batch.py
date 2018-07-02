@@ -10,12 +10,14 @@ import numpy as np
 class Dataset(object):
     def __init__(self, images, labels):
         '''
-        With images[number of patches, patch_size, patch_size, channels]
-        labels[number of patches, onehot label]
+        With images[number of batches, patch_size, patch_size, channels]
+        labels[number of batches, onehot label]
         '''
         self._images = images
         self._labels = labels
+        self._images_shape = images.shape
         self.sample_num = images.shape[0]
+        self.height = images.shape[1]
         self.channels = images.shape[3]
         self.class_num = labels.shape[1]
         self._index = 0
@@ -38,3 +40,11 @@ class Dataset(object):
             end = self.sample_num 
         self._index = end
         return (self._images[start:end], self._labels[start:end])
+    
+    def zeros_batch(self, batch_size):
+        shape = list(self._images_shape[1:])
+        batch = [batch_size]
+        return np.zeros(batch + shape) 
+    
+    
+        
