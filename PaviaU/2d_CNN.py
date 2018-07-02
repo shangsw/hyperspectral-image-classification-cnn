@@ -12,18 +12,19 @@ import os
 import scipy.io
 import math
 from next_batch import Dataset
-import numpy as np
 
-DATA_PATH = os.path.join(os.getcwd(),"Data")
+
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
 IMAGE_SIZE = patch_size.patch_size
 
-DATA_FILENAME = ['Train_'+str(IMAGE_SIZE)+'x'+str(IMAGE_SIZE)+'_2d.mat',
-                 'Test_'+str(IMAGE_SIZE)+'x'+str(IMAGE_SIZE)+'.mat']
+DATA_FILENAME = ['PaviaU_train_2d_wa.mat',
+                 'PaviaU_test_2d']
 
-FILTER_SIZE = 5
+FILTER_SIZE = 3
 conv1_channels = 32
 conv2_channels = 64
-fc1_units = 2048
+fc1_units = 256
+#fc2_units = 512
 batch_size = 100
 batch_size_for_test = 1000
 test_accuracy = []
@@ -39,10 +40,18 @@ input_data = Dataset(train_data['train_patch'], train_data['train_labels'])
 evl_data = Dataset(test_data['test_patch'], test_data['test_labels'])
 '''
 input_data = Dataset(scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[0]))['train_patch_2d'], 
-                     scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[0]))['train_labels_2d']) 
-evl_data = Dataset(scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[1]))['test_patch_2d'], 
-                   scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[1]))['test_labels'])        
-
+                     scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[0]))['train_labels']) 
+'''
+test_data, test_labels=[],[]
+for i in range(8):
+    test_data_filename = DATA_FILENAME[1]+'_'+str(i)+'_.mat'
+    test = scipy.io.loadmat(os.path.join(DATA_PATH, test_data_filename))
+    test_data.extend(test['test_patch_2d'])
+    test_labels.extend(test['test_labels'])
+test_data = np.array(test_data)
+test_labels = np.array(test_labels)
+evl_data = Dataset(test_data, test_labels)    
+'''
 BAND = input_data.channels
 CLASS_NUM = input_data.class_num
 tf.reset_default_graph()
@@ -92,14 +101,25 @@ with tf.variable_scope('FC1'):
 #dropout
 keep_prob = tf.placeholder(tf.float32, name='keep_prob')
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+'''
+#FC2
+with tf.variable_scope('FC2'):
+    w_fc3 = weight_variable([fc1_units, fc2_units])
+    b_fc3 = bias_variable([fc2_units])
+    
+    h_fc3 = tf.nn.relu(tf.matmul(h_fc1_drop, w_fc3) + b_fc3, name='h_fc2')
+#dropout
+h_fc2_drop = tf.nn.dropout(h_fc3, keep_prob)
+'''
 #readout layer
 with tf.variable_scope('FC2'):
     w_fc2 = weight_variable([fc1_units, CLASS_NUM])
     b_fc2 = bias_variable([CLASS_NUM])
     
     y_conv = tf.matmul(h_fc1_drop, w_fc2) + b_fc2
-    
+
 #loss and evluation
+softmax_out = tf.nn.softmax(logits=y_conv, name='predict_y')
 cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
 train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
@@ -107,18 +127,18 @@ correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
 
 # save model
-#saver = tf.train.Saver(max_to_keep=1)
+saver = tf.train.Saver(max_to_keep=1)
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for i in range(20001):
         batch = input_data.next_batch(batch_size)
         _, loss, train_accuracy = sess.run([train_step,cross_entropy,accuracy], 
                            feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-        if i % 1000 == 0:
-            #saver.save(sess, "model/2dcnn_model/2dcnn-model", global_step=i)
+        if i % 2000 == 0:
+            saver.save(sess, "model/2dcnn_model/2dcnn-model", global_step=i)
             print('Num of epcho: %d, Training accuracy: %g' % (i, train_accuracy))
             print('loss: %g' % loss)      
-    
+''' 
     #evluation
     for i in range(int(evl_data.sample_num/batch_size_for_test) + 1):
         test_batch = evl_data.next_batch(batch_size_for_test)
@@ -126,3 +146,4 @@ with tf.Session() as sess:
             x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
     
 print('Test accuracy: %g' % np.mean(test_accuracy))
+'''

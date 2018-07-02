@@ -1,24 +1,23 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Sun Apr 22 19:06:22 2018
+Created on Sat Apr 28 19:15:51 2018
 
 @author: ssw
 """
+
 import numpy as np
 
-class Dataset(object):
-    def __init__(self, images, labels):
+class Dataset_for_combinenet(object):
+    def __init__(self, input_data, labels):
         '''
-        With images[number of batches, patch_size, patch_size, channels]
-        labels[number of batches, onehot label]
+        input_data_1d/2d[number of samples, feature]
+        labels[number of samples, onehot label]
         '''
-        self._images = images
+        self._images = input_data
         self._labels = labels
-        self._images_shape = images.shape
-        self.sample_num = images.shape[0]
-        self.height = images.shape[1]
-        self.channels = images.shape[3]
+        self.sample_num = input_data.shape[0]
+        self.feature_shape = input_data.shape[1]
         self.class_num = labels.shape[1]
         self._index = 0
         self._complete = 0
@@ -35,16 +34,12 @@ class Dataset(object):
             self._complete = 0
             start = 0
         end = start + batch_size 
-        if end > self.sample_num:
+        if end >= self.sample_num:
             self._complete = 1
             end = self.sample_num 
         self._index = end
         return (self._images[start:end], self._labels[start:end])
     
     def zeros_batch(self, batch_size):
-        shape = list(self._images_shape[1:])
-        batch = [batch_size]
-        return np.zeros(batch + shape) 
-    
-    
         
+        return np.zeros([batch_size, self.feature_shape]) 

@@ -9,29 +9,29 @@ Created on Fri Apr 27 10:20:36 2018
 Use trained 1d-net and 2d-net for fune-tunning, training the fusion net 
 '''
 import tensorflow as tf
-import patch_size
 import os
 import scipy.io
 import numpy as np
 
 
-DATA_PATH = os.path.join(os.getcwd(),"Data")
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
 
-data_filename = ['Train_'+str(patch_size.patch_size)+'x'+str(patch_size.patch_size)+'_1d.mat',
-                 'Train_'+str(patch_size.patch_size)+'x'+str(patch_size.patch_size)+'_2d.mat',
-                 'Test_'+str(patch_size.patch_size)+'x'+str(patch_size.patch_size)+'.mat']
+data_filename = ['Indianpines_train_1d_wa.mat',
+                 'Indianpines_train_2d_wa.mat',
+                 'Indianpines_test_1d.mat',
+                 'Indianpines_test_2d.mat']
 
 batch_size = 100
 batch_size_for_test = 1000
 
-
+a=scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[2]))
 #load preparaed data
 input_data_1d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_patch_1d']     
 input_data_2d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[1]))['train_patch_2d']
-input_labels_1d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_labels_1d']
-input_labels_2d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[1]))['train_labels_2d']
+input_labels_1d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_labels']
+input_labels_2d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[1]))['train_labels']
 eval_data_1d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[2]))['test_patch_1d']
-eval_data_2d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[2]))['test_patch_2d']
+eval_data_2d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[3]))['test_patch_2d']
 eval_labels = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[2]))['test_labels']
 
 train_feature_1d = []
@@ -44,8 +44,8 @@ accuracy_2d = []
 #load 1d-net and get 1d-feature
 tf.reset_default_graph()
 with tf.Session() as sess:
-    saver = tf.train.import_meta_graph('./model/1dcnn_model/1dcnn-model-20000.meta')
-    saver.restore(sess, './model/1dcnn_model/1dcnn-model-20000')
+    saver = tf.train.import_meta_graph('./model/1dcnn_model/1dcnn-20000.meta')
+    saver.restore(sess, './model/1dcnn_model/1dcnn-20000')
     graph1d = tf.get_default_graph()
     x_1d = graph1d.get_tensor_by_name("x:0")
     y_1d = graph1d.get_tensor_by_name("y_:0")
@@ -73,7 +73,7 @@ with tf.Session() as sess:
 
 tf.reset_default_graph()
 with tf.Session() as sess:
-    saver = tf.train.import_meta_graph('./model/2dcnn_model/2dcnn-model-20000.meta')
+    saver = tf.train.import_meta_graph('./model/2dcnn_model/2dcnn-20000.meta')
     saver.restore(sess, tf.train.latest_checkpoint("model/2dcnn_model/"))
     graph2d = tf.get_default_graph()
     x_2d = graph2d.get_tensor_by_name('x:0')
@@ -101,15 +101,14 @@ with tf.Session() as sess:
 #save data for fudion net
 #1.Training data
 train_dict = {}
-file_name_train= 'Train_feature.mat'
+file_name_train= 'Indianpines_train_feature.mat'
 train_dict["train_feature_1d"] = train_feature_1d
 train_dict['train_feature_2d'] = train_feature_2d
-train_dict["train_labels_1d"] = input_labels_1d
-train_dict['train_labels_2d'] = input_labels_2d
+train_dict["train_labels"] = input_labels_1d
 scipy.io.savemat(os.path.join(DATA_PATH, file_name_train),train_dict)
 #2.Test data
 test_dict = {}
-file_name_test = 'Test_feature.mat'
+file_name_test = 'Indianpines_test_feature.mat'
 test_dict["test_feature_1d"] = test_feature_1d
 test_dict["test_feature_2d"] = test_feature_2d
 test_dict["test_labels"] = eval_labels

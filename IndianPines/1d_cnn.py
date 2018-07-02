@@ -7,30 +7,33 @@ Created on Fri Apr 27 09:09:26 2018
 """
 
 import tensorflow as tf
-import patch_size
 import os
 import scipy.io
 import math
 from next_batch import Dataset
 import numpy as np
 
-DATA_PATH = os.path.join(os.getcwd(),"Data")
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
 
-DATA_FILENAME = ['Train_'+str(patch_size.patch_size)+'x'+str(patch_size.patch_size)+'_1d.mat',
-                 'Test_'+str(patch_size.patch_size)+'x'+str(patch_size.patch_size)+'.mat']
+data_filename = ['Indianpines_train_1d_wa.mat',
+                 'Indianpines_test_1d.mat']
 
-filter_size = 5
-conv1_channels = 32
+filter_size_1 = 16
+filter_size_2 = 4
+conv1_channels = 53
 conv2_channels = 64
+conv3_channels = 128
+conv4_channels = 128
+
 fc1_units = 1024
 batch_size = 100
 batch_size_for_test = 1000
 test_accuracy = []
-
-input_data = Dataset(scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[0]))['train_patch_1d'], 
-                     scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[0]))['train_labels_1d']) 
-evl_data = Dataset(scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[1]))['test_patch_1d'], 
-                   scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[1]))['test_labels'])        
+a=scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))
+input_data = Dataset(scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_patch_1d'], 
+                     scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_labels']) 
+evl_data = Dataset(scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[1]))['test_patch_1d'], 
+                   scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[1]))['test_labels'])        
 
 #load preparaed data
 height = input_data.height
@@ -53,29 +56,55 @@ def conv1d(x, w):
     return tf.nn.conv2d(x, w, strides=[1, 1, 1, 1], padding='SAME')
 
 def max_pool_2x1(x):
-    return tf.nn.max_pool(x, ksize=[1, 2, 1, 1],strides=[1, 2, 1, 1], padding='SAME', name='pool')
+    return tf.nn.max_pool(x, ksize=[1, 3, 1, 1],strides=[1, 3, 1, 1], padding='SAME', name='pool')
 
 #first convolutional layer
 with tf.variable_scope('conv1'):
-    w_conv1 = weight_variable([filter_size, 1, 1, conv1_channels])
+    w_conv1 = weight_variable([filter_size_1, 1, 1, conv1_channels])
     b_conv1 = bias_variable([conv1_channels])
     
     h_conv1 = tf.nn.relu(conv1d(x, w_conv1)+ b_conv1, name='h_conv1')
     h_pool1 = max_pool_2x1(h_conv1)
+
 #second convolutional layer
 with tf.variable_scope('conv2'):
-    w_conv2 = weight_variable([filter_size, 1, conv1_channels, conv2_channels])
+    w_conv2 = weight_variable([filter_size_1, 1, conv1_channels, conv2_channels])
     b_conv2 = bias_variable([conv2_channels])
     
     h_conv2 = tf.nn.relu(conv1d(h_pool1, w_conv2) + b_conv2, name='h_conv2')
     h_pool2 = max_pool_2x1(h_conv2)
 
+#third convolutional layer
+with tf.variable_scope('conv3'):
+    w_conv3 = weight_variable([filter_size_2, 1, conv2_channels, conv3_channels])
+    b_conv3 = bias_variable([conv3_channels])
+    
+    h_conv3 = tf.nn.relu(conv1d(h_pool2, w_conv3)+ b_conv3, name='h_conv3')
+    h_pool3 = max_pool_2x1(h_conv3)
+
+#forth convolutional layer
+with tf.variable_scope('conv4'):
+    w_conv4 = weight_variable([filter_size_2, 1, conv3_channels, conv4_channels])
+    b_conv4 = bias_variable([conv4_channels])
+    
+    h_conv4 = tf.nn.relu(conv1d(h_pool3, w_conv4)+ b_conv4, name='h_conv4')
+''' 
+
+#fifth convolutional layer
+with tf.variable_scope('conv5'):
+    w_conv5 = weight_variable([filter_size_2, 1, conv4_channels, conv5_channels])
+    b_conv5 = bias_variable([conv5_channels])
+    
+    h_conv5 = tf.nn.relu(conv1d(h_pool4, w_conv5)+ b_conv5, name='h_conv5')
+    h_pool5 = max_pool_2x1(h_conv5)  
+'''
 #full-connected layer
-size_after_conv_and_pool = int(math.ceil(math.ceil(height/2.0)/2.0))     #with padding 'SAME'
-h_pool2_flat = tf.reshape(h_pool2, [-1, size_after_conv_and_pool*conv2_channels], name='h_feature')
+size_after_conv_and_pool = int(math.ceil(math.ceil(math.ceil(height/3.0)/3.0)/3.0))     #with padding 'SAME'
+h_pool2_flat = tf.reshape(h_conv4, [-1, size_after_conv_and_pool*conv4_channels], name='h_feature')
+
 #FC1
 with tf.variable_scope('FC1'):
-    w_fc1 = weight_variable([size_after_conv_and_pool*conv2_channels, fc1_units])
+    w_fc1 = weight_variable([size_after_conv_and_pool*conv4_channels, fc1_units])
     b_fc1 = bias_variable([fc1_units])
     
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, w_fc1) + b_fc1, name='h_fc1')
@@ -89,13 +118,14 @@ with tf.variable_scope('FC2'):
     
     y_conv = tf.matmul(h_fc1_drop, w_fc2) + b_fc2
 #loss and evluation
+softmax_out = tf.nn.softmax(logits=y_conv, name='predict_y')
 cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
 train_step = tf.train.AdamOptimizer(5e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
 # save model
-#saver = tf.train.Saver(max_to_keep=1)
+saver = tf.train.Saver(max_to_keep=1)
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -103,9 +133,9 @@ with tf.Session() as sess:
         batch = input_data.next_batch(batch_size)
         _, loss, train_accuracy = sess.run([train_step,cross_entropy,accuracy], 
                            feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-        if i % 1000 == 0:
-            #saver.save(sess, "model/1dcnn_model/1dcnn-model", global_step=i)
-            print('Num of epcho: %d, Training accuracy: %g' % (i, train_accuracy))
+        if i % 2000 == 0:
+            saver.save(sess, "model/1dcnn_model/1dcnn", global_step=i)
+            print('Num of epoch: %d, Training accuracy: %g' % (i, train_accuracy))
             print('loss: %g' % loss)      
     
     #evluation
@@ -115,4 +145,6 @@ with tf.Session() as sess:
             x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
     
 print('Test accuracy: %g' % np.mean(test_accuracy))
-    
+
+
+

@@ -34,7 +34,7 @@ class Dataset_for_combinenet(object):
             self._complete = 0
             start = 0
         end = start + batch_size 
-        if end > self.sample_num:
+        if end >= self.sample_num:
             self._complete = 1
             end = self.sample_num 
         self._index = end

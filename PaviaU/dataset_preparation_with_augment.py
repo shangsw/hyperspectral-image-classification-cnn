@@ -15,7 +15,7 @@ import patch_size
 from sklearn.preprocessing import label_binarize
 
 #load dataset
-DATA_PATH = os.path.join(os.getcwd(),"Data")
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
 input_mat = scipy.io.loadmat(os.path.join(DATA_PATH, 'Indian_pines_corrected.mat'))['indian_pines_corrected']
 target_mat = scipy.io.loadmat(os.path.join(DATA_PATH, 'Indian_pines_gt.mat'))['indian_pines_gt']
 #define global variables
@@ -118,7 +118,6 @@ test_dict["test_labels"] = test_labels_onehot
 scipy.io.savemat(os.path.join(DATA_PATH, file_name),test_dict)
 
 del test_patch_final_1d, test_patch_final_2d, test_labels_onehot, test_patch_1d, test_patch_2d, test_labels
-
 
 '''
 1d data augment
