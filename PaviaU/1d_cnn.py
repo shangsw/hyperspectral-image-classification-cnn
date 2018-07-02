@@ -13,7 +13,7 @@ import math
 from next_batch import Dataset
 import numpy as np
 
-DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v5/Data"
 
 DATA_FILENAME = ['PaviaU_train_1d_wa.mat',
                  'PaviaU_test_1d']

@@ -13,7 +13,7 @@ import scipy.io
 from next_batch_for_combinenet import Dataset_for_combinenet
 import numpy as np
 
-DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v5/Data"
 
 data_filename = 'PaviaU_train_feature.mat'
 
@@ -108,16 +108,16 @@ with tf.variable_scope('FC4'):
 softmax_out = tf.nn.softmax(logits=y_output, name='predict_y')
 cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_output))
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(1e-5).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_output, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
 #save graph
 saver = tf.train.Saver(max_to_keep=1)
 loss_get = []
 with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    #saver.restore(sess, "model/dcn/dcn-model-20000")
-    for i in range(20001):
+    #sess.run(tf.global_variables_initializer())
+    saver.restore(sess, "model/dcn/dcn-model-20000")
+    for i in range(10001):
         batch = input_dataset.next_batch(batch_size)
         #when 1d-net is training,2d-net feed zeros
         _, loss, train_accuracy = sess.run([train_step,cross_entropy,accuracy], 

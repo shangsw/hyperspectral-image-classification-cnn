@@ -15,7 +15,7 @@ import patch_size
 from sklearn.preprocessing import label_binarize
 
 #load dataset
-DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v5/Data"
 input_mat = scipy.io.loadmat(os.path.join(DATA_PATH, 'PaviaU.mat'))['paviaU']
 target_mat = scipy.io.loadmat(os.path.join(DATA_PATH, 'PaviaU_gt.mat'))['paviaU_gt']
 #define global variables

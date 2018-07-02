@@ -14,7 +14,7 @@ from next_batch_for_combinenet import Dataset_for_combinenet
 import numpy as np
 import result_eval
 
-DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v5/Data"
 
 data_filename = 'PaviaU_test_feature_'
 predict_labels = []
@@ -51,7 +51,7 @@ kappa = result_eval.my_kappa(test_labels, predict_labels)
 oa = result_eval.my_oa(test_labels, predict_labels)
 (accuracy, aa) = result_eval.my_aa(cnf_matrix)
 
-
+'''
 #save result
 result_1dcnn = {}
 file_name = 'PaviaU_dcn_result_0.05(5).mat'
@@ -62,3 +62,4 @@ result_1dcnn["OA"] = oa
 result_1dcnn["AA"] = aa
 result_1dcnn["Accuracy"] = accuracy
 scipy.io.savemat(os.path.join(DATA_PATH, file_name), result_1dcnn)
+'''

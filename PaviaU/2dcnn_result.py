@@ -107,12 +107,10 @@ with tf.Session() as sess:
     keep_prob = graph.get_tensor_by_name("keep_prob:0")
     for i in range(gt_2dcnn.shape[0]-patch_size.patch_size):
         for j in range(gt_2dcnn.shape[1]-patch_size.patch_size):
-            i_tar = i + int((patch_size.patch_size - 1)/2)
-            j_tar = j + int((patch_size.patch_size - 1)/2)
-            if gt_2dcnn[i_tar][j_tar] == 0:
+            if gt_2dcnn[i][j] == 0:
                 continue
             else:
-                gt_2dcnn[i_tar][j_tar]=np.argmax(sess.run(predict_y, feed_dict={
+                gt_2dcnn[i][j]=np.argmax(sess.run(predict_y, feed_dict={
                         x: np.transpose(Patch_2d(i, j),(1,2,0))[np.newaxis, :], y_: test_batch[1], keep_prob: 1.0})) + 1
 #save result
 result_2dcnn = {}

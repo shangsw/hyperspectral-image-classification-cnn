@@ -13,7 +13,7 @@ from next_batch import Dataset
 import numpy as np
 import result_eval
 
-DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v5/Data"
 
 DATA_FILENAME = 'PaviaU_test_1d'
 

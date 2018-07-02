@@ -15,7 +15,7 @@ import result_eval
 
 
 
-data_path = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
+data_path = "/home/ssw/Hyperspectral_classification_CNN/v5/Data"
 data_filename = ['PaviaU_train_1d_wa.mat',
                  'PaviaU_test_1d']
 

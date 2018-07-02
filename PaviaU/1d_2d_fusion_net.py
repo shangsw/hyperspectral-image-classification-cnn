@@ -12,7 +12,7 @@ import scipy.io
 from next_batch_for_combinenet import Dataset_for_combinenet
 
 
-DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v5/Data"
 data_filename = 'PaviaU_train_feature.mat'
  
 fc1_units = 1024
@@ -119,6 +119,8 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accurac
 #save net
 saver = tf.train.Saver(max_to_keep=1)
 
+acc_1d, acc_2d, loss_1d_get, loss_2d_get = [], [], [], []
+
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for i in range(20001):
@@ -129,13 +131,25 @@ with tf.Session() as sess:
         batch_2d_zeros = input_data_2d.zeros_batch(batch_1d[0].shape[0])
         _, loss_1d, train_accuracy_1d = sess.run([train_step,cross_entropy,accuracy], 
                            feed_dict={x_1d: batch_1d[0], x_2d: batch_2d_zeros, y_: batch_1d[1], keep_prob: 0.5})
+        acc_1d.append(train_accuracy_1d)
+        loss_1d_get.append(loss_1d)
         _, loss_2d, train_accuracy_2d = sess.run([train_step,cross_entropy,accuracy], 
                            feed_dict={x_1d: batch_1d_zeros, x_2d: batch_2d[0], y_: batch_2d[1], keep_prob: 0.5})
+        acc_2d.append(train_accuracy_2d)
+        loss_2d_get.append(loss_2d)
         
         if i % 2000 == 0:
             saver.save(sess, "model/fusion_net/fusion_net-model", global_step=i)
             print('(Num of epoch: %d)' % i)
             print('Training accuracy_1d: %g, accuracy_2d: %g' % (train_accuracy_1d, train_accuracy_2d))
             print('loss_1d: %g, loss_2d: %g' % (loss_1d, loss_2d))   
-        
-    
+'''
+import numpy as np    
+result={}
+file_name = 'result'
+result['accuracy_1d'] = np.array(acc_1d)
+result['accuracy_2d'] = np.array(acc_2d)
+result['loss_1d'] = np.array(loss_1d_get)
+result['loss_2d'] = np.array(loss_2d_get)
+scipy.io.savemat(os.path.join(DATA_PATH, file_name), result) 
+'''   

@@ -14,7 +14,7 @@ import math
 from next_batch import Dataset
 
 
-DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v4/Data"
+DATA_PATH = "/home/ssw/Hyperspectral_classification_CNN/v5/Data"
 IMAGE_SIZE = patch_size.patch_size
 
 DATA_FILENAME = ['PaviaU_train_2d_wa.mat',
