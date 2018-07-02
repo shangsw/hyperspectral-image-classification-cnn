@@ -17,7 +17,7 @@ import numpy as np
 DATA_PATH = os.path.join(os.getcwd(),"Data")
 
 DATA_FILENAME = ['Train_'+str(patch_size.patch_size)+'x'+str(patch_size.patch_size)+'_1d.mat',
-                 'Test_'+str(patch_size.patch_size)+'x'+str(patch_size.patch_size)+'_1d.mat']
+                 'Test_'+str(patch_size.patch_size)+'x'+str(patch_size.patch_size)+'.mat']
 
 filter_size = 5
 conv1_channels = 32
@@ -28,7 +28,7 @@ batch_size_for_test = 1000
 test_accuracy = []
 
 input_data = Dataset(scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[0]))['train_patch_1d'], 
-                     scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[0]))['train_labels']) 
+                     scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[0]))['train_labels_1d']) 
 evl_data = Dataset(scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[1]))['test_patch_1d'], 
                    scipy.io.loadmat(os.path.join(DATA_PATH, DATA_FILENAME[1]))['test_labels'])        
 
@@ -95,16 +95,16 @@ train_step = tf.train.AdamOptimizer(5e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
 # save model
-saver = tf.train.Saver(max_to_keep=1)
+#saver = tf.train.Saver(max_to_keep=1)
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(10001):
+    for i in range(20001):
         batch = input_data.next_batch(batch_size)
         _, loss, train_accuracy = sess.run([train_step,cross_entropy,accuracy], 
                            feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
         if i % 1000 == 0:
-            saver.save(sess, "model/1dcnn_model/1dcnn-model", global_step=i)
+            #saver.save(sess, "model/1dcnn_model/1dcnn-model", global_step=i)
             print('Num of epcho: %d, Training accuracy: %g' % (i, train_accuracy))
             print('loss: %g' % loss)      
     

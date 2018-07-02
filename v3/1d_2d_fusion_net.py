@@ -27,7 +27,8 @@ tf.reset_default_graph()
 
 #load data
 
-input_labels = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_labels']
+input_labels_1d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_labels_1d']
+input_labels_2d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_labels_2d']
 eval_data_1d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[1]))['test_feature_1d']
 #eval_data_1d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[2]))['test_original_1d']
 eval_data_2d = scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[1]))['test_feature_2d']
@@ -38,10 +39,10 @@ input_data_1d = Dataset_for_combinenet(scipy.io.loadmat(os.path.join(DATA_PATH, 
                             input_labels)
 '''
 input_data_1d = Dataset_for_combinenet(scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_feature_1d'], 
-                        input_labels)
+                        input_labels_1d)
 
 input_data_2d = Dataset_for_combinenet(scipy.io.loadmat(os.path.join(DATA_PATH, data_filename[0]))['train_feature_2d'],
-                        input_labels)
+                        input_labels_2d)
 
 feature_1d_num = input_data_1d.feature_shape
 feature_2d_num = input_data_2d.feature_shape
@@ -103,7 +104,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accurac
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(10001):
+    for i in range(20001):
         batch_1d = input_data_1d.next_batch(batch_size)
         batch_2d = input_data_2d.next_batch(batch_size)
         #when 1d-net is training,2d-net feed zeros
